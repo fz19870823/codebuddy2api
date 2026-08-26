@@ -278,6 +278,39 @@ SQLite 与 CodeBuddy 凭证保存在当前目录的 `data` 中，系统用户保
 
 若需要通过域名、服务器 IP 访问服务、配置反向代理或修改其他配置，可参考 [.env.example](.env.example) 创建 `.env` 并配置相关环境变量后再启动。
 
+### 反向代理（Nginx / Caddy 等）部署
+
+本服务默认不校验 Host 头，因此反向代理可直接使用公网域名，无需额外白名单。部署时请注意以下要点：
+
+1. **转发协议头**：代理必须在转发请求时带上客户端的真实协议与 Host，否则管理台展示给用户的 API Base URL 会变成 `http://` 或内网地址。Nginx 示例：
+
+   ```nginx
+   server {
+       listen 443 ssl;
+       server_name api.example.com;
+
+       # SSL 配置省略...
+
+       location / {
+           proxy_pass http://127.0.0.1:8001;
+           proxy_set_header Host              $host;
+           proxy_set_header X-Real-IP        $remote_addr;
+           proxy_set_header X-Forwarded-For  $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;   # 关键：让 Base URL 正确显示 https
+           # SSE 流式（聊天）必须关闭缓冲，否则输出被攒批下发
+           proxy_buffering off;
+           proxy_cache off;
+           proxy_read_timeout 3600s;
+       }
+   }
+   ```
+
+2. **SSE 流式缓冲**：聊天接口是 Server-Sent Events 流式响应。务必 `proxy_buffering off;`，否则 Nginx 会缓冲直到响应结束才下发，导致打字机效果失效、首字延迟极大甚至超时。
+
+3. **API Base URL 自动生成**：管理台「仪表盘」展示的 `api_base_url` / `anthropic_api_base_url` 由服务端根据 `X-Forwarded-Proto` + `Host` 自动生成。只要代理正确设置上述两个头，就会得到 `https://api.example.com/...`，可直接复制给 OpenWebUI / Claude Code 等客户端使用。
+
+4. **公网加固**：若需收紧 Host 校验，设置 `CODEBUDDY_ALLOWED_HOSTS=api.example.com` 后重启；此时必须保证代理转发的 `Host` 在该列表中，否则返回 `400 Invalid host header`。
+
 ## 开始使用
 
 服务启动后，按此顺序操作：
@@ -480,7 +513,7 @@ OpenAPI 文档会展示外部 `/openai/v1/*` 和 `/anthropic/v1/*` 的请求体�
 
 | 环境变量                        | 默认值                | 说明                                                         |
 | ------------------------------- | --------------------- | ------------------------------------------------------------ |
-| `CODEBUDDY_ALLOWED_HOSTS`       | `localhost,127.0.0.1` | 允许访问本服务的 Host 头                                     |
+| `CODEBUDDY_ALLOWED_HOSTS`       | 空（不校验）           | 允许访问本服务的 Host 头；默认不校验，反向代理可直接使用公网域名；公网建议填具体域名（逗号分隔）启用防护 |
 | `CODEBUDDY_ALLOWED_ORIGINS`     | 空                    | 允许跨域访问的浏览器 Origin；空表示不启用 CORS               |
 | `CODEBUDDY_CSP_FRAME_ANCESTORS` | `none`                | CSP 页面嵌入来源；支持 `self` 与空格分隔的 HTTP/HTTPS Origin |
 
@@ -627,7 +660,7 @@ pnpm run test:coverage
 
 #### `Invalid host header`
 
-把实际访问域名加入 `CODEBUDDY_ALLOWED_HOSTS` 后重启服务。
+仅在显式设置了 `CODEBUDDY_ALLOWED_HOSTS` 且当前访问域名不在列表中时才会出现。默认值为空（不校验 Host），反向代理直接使用公网域名即可。如需收紧，把实际访问域名加入 `CODEBUDDY_ALLOWED_HOSTS`（逗号分隔）后重启服务。
 
 #### 查看详细日志
 

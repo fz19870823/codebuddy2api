@@ -57,7 +57,7 @@ _DEFAULT_CONFIG = {
     "CODEBUDDY_API_ENDPOINT": "https://copilot.tencent.com",
     "CODEBUDDY_ALLOWED_API_ENDPOINTS": "https://copilot.tencent.com,https://www.codebuddy.ai",
     "CODEBUDDY_DATA_DIR": "data",
-    "CODEBUDDY_ALLOWED_HOSTS": "localhost,127.0.0.1",
+    "CODEBUDDY_ALLOWED_HOSTS": "",
     "CODEBUDDY_ALLOWED_ORIGINS": "",
     "CODEBUDDY_CSP_FRAME_ANCESTORS": "none",
     "CODEBUDDY_MAX_REQUEST_BODY_BYTES": 16 * 1024 * 1024,
