@@ -35,7 +35,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         }
 
         self.assertIn("CODEBUDDY_DATA_DIR: /app/data", compose_lines)
-        self.assertIn("image: ghcr.io/iceean/codebuddy2api:latest", compose_lines)
+        self.assertIn("image: ghcr.io/fz19870823/codebuddy2api:latest", compose_lines)
         self.assertIn("- ./data:/app/data", compose_lines)
         self.assertIn("- ./secrets:/app/secrets:ro", compose_lines)
         self.assertNotIn(".codebuddy_creds", compose_text)
