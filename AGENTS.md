@@ -32,7 +32,7 @@ docker build -t codebuddy2api:local .
 venv/bin/python3 scripts/hash_password.py <用户名> --output secrets/users.txt
 
 # 使用发布镜像管理用户
-docker run --rm -it -v "$PWD/secrets:/app/secrets" ghcr.io/iceean/codebuddy2api:latest add-user <用户名>
+docker run --rm -it -v "$PWD/secrets:/app/secrets" ghcr.io/fz19870823/codebuddy2api:latest add-user <用户名>
 ```
 
 ## 开发规定

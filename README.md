@@ -254,7 +254,7 @@ curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/iceean/codebu
 ```bash
 docker run --rm -it \
   -v "$PWD/secrets:/app/secrets" \
-  ghcr.io/iceean/codebuddy2api:latest \
+  ghcr.io/fz19870823/codebuddy2api:latest \
   add-user admin
 ```
 

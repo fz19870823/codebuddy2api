@@ -1,6 +1,6 @@
 services:
   codebuddy2api:
-    image: ghcr.io/iceean/codebuddy2api:latest
+    image: ghcr.io/fz19870823/codebuddy2api:latest
     restart: unless-stopped
     ports:
       - "8001:8001"
