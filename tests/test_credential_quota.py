@@ -1,5 +1,8 @@
 import asyncio
+import os
+import time
 import unittest
+from datetime import datetime, timezone
 from unittest import mock
 
 import httpx
@@ -159,6 +162,28 @@ class CredentialQuotaManagerTests(ConfigIsolationMixin, unittest.IsolatedAsyncio
             "%E7%A0%94%E5%8F%91%E9%83%A8",
         )
         self.assertIsInstance(kwargs["timeout"], httpx.Timeout)
+
+    @unittest.skipUnless(hasattr(time, "tzset"), "平台不支持进程时区切换")
+    async def test_personal_probe_uses_local_time_for_package_end_filter(self):
+        now = int(datetime(2026, 7, 18, tzinfo=timezone.utc).timestamp())
+        manager, client = self.quota_manager(
+            [quota_response(package())],
+            now_factory=lambda: now,
+        )
+
+        try:
+            with mock.patch.dict(os.environ, {"TZ": "Asia/Shanghai"}):
+                time.tzset()
+                await manager.probe_credential(
+                    "admin", self.manager, self.credential_id,
+                )
+        finally:
+            time.tzset()
+
+        self.assertEqual(
+            client.requests[0][1]["json"]["PackageEndTimeRangeBegin"],
+            "2026-07-18 08:00:00",
+        )
 
     async def test_personal_probe_uses_precise_current_cycle_values(self):
         manager, _client = self.quota_manager([
