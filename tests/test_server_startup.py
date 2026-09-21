@@ -53,6 +53,27 @@ class RepositoryConfigurationTests(unittest.TestCase):
         self.assertIn("path: .env", compose_text)
         self.assertIn("required: false", compose_text)
 
+    def test_compose_timezone_has_an_overrideable_shanghai_default(self):
+        compose_text = (self.repository_root / "docker-compose.yml").read_text(
+            encoding="utf-8"
+        )
+        compose_lines = {
+            line.strip()
+            for line in compose_text.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        }
+
+        self.assertIn("TZ: ${TZ:-Asia/Shanghai}", compose_lines)
+        self.assertNotIn("TZ: Asia/Shanghai", compose_lines)
+
+    def test_environment_example_documents_container_timezone(self):
+        example_text = (self.repository_root / ".env.example").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("# 默认值: Asia/Shanghai", example_text)
+        self.assertIn("# TZ=Asia/Shanghai", example_text)
+
     def test_release_workflow_uploads_local_runtime_packages(self):
         workflow = (
             self.repository_root / ".github" / "workflows" / "release.yml"
