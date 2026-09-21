@@ -255,6 +255,22 @@ class ServerStartupTests(unittest.TestCase):
 
         self.assertIn(CORSMiddleware, middleware_classes)
 
+    def test_main_module_enables_trusted_host_middleware(self):
+        with (
+            mock.patch.object(
+                config, "get_allowed_hosts", return_value=["app.example.com"]
+            ),
+            mock.patch.object(config, "get_allowed_origins", return_value=[]),
+            mock.patch("uvicorn.run") as run,
+        ):
+            namespace = runpy.run_module("web", run_name="__main__")
+
+        run.assert_called_once()
+        middleware_classes = [item.cls for item in namespace["app"].user_middleware]
+        from starlette.middleware.trustedhost import TrustedHostMiddleware
+
+        self.assertIn(TrustedHostMiddleware, middleware_classes)
+
 
 class ServerLifecycleTests(unittest.IsolatedAsyncioTestCase):
     async def test_lifespan_starts_and_stops_resources(self):
